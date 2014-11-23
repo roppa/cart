@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf8">
+	<title>Shopping cart</title>
+	<script type="text/javascript" src="js/cart.js"></script>
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+
+<div id="cart"></div>
+
+<div id="store"></div>
+
+<script type="text/javascript">
+	
+	"use strict";
+
+	var shoppingCart = new Cart(), //instantiate cart
+		products = [ //example products
+			{ id : "23fdw", name : "shorts", price : 15.99, size : "M",  colour : "Black", count : 0 },
+			{ id : "ad44f", name : "socks", price : 5.99, size : "S",  colour : "White", count : 0 },
+			{ id : "vbr4", name : "shirt", price : 9.99, size : "M",  colour : "Mixed", count : 0 },
+			{ id : "dvo88", name : "jacket", price : 15.99, size : "M",  colour : "Illuminous green", count : 0 }
+		],
+		productModels = []; //to store products
+
+	/* DOM elements */
+	var domCart = document.getElementById("cart"),
+		domTotal = document.getElementById("total"),
+		store = document.getElementById("store");
+
+	for (var i in products) {
+		var index = productModels.push(new Product(products[i]));
+		store.innerHTML = store.innerHTML + productModels[index - 1].render();
+	}
+
+	//set element to display cart
+	shoppingCart.addListener(domCart);
+
+	document.querySelector('body').addEventListener('click', function(event) {
+		if(event.target.className === "addToCart" || event.target.className === "removeFromCart") {
+			for (var i in event.target.attributes) {
+				if (typeof event.target.attributes[i].name !== "undefined" && event.target.attributes[i].name === "data-id")  {
+					for (var j in productModels) {
+						if (productModels[j].id === event.target.attributes[i].value) {
+							if(event.target.className === "addToCart") {
+								shoppingCart.add(productModels[j]);
+							} else {
+								shoppingCart.remove(productModels[j].id);
+							}
+
+							document.querySelectorAll("[data-domid='" + productModels[j].id + "']")[0].innerHTML = productModels[j].render();
+						}
+					}
+				}
+			}
+		}
+	});
+
+</script>
+
+</body>
+</html>
