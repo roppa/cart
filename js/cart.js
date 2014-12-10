@@ -1,47 +1,53 @@
-"use strict";
 /**
 * Shopping cart singleton constructor. Creating a singleton shopping cart as we only need one.
 * @returns instance of Cart
 */
-var Cart = (function() {
-    
+var Cart = (function () {
+    "use strict";
     var instance, // The "private" instance
         items = [], //products added to cart
         discountId = "JHKDF", //of course wouldn't do this for real, would be a server call
-        discount = 15; //if discount is applied it will be in %
+        discount = 15, //if discount is applied it will be in %
 
-    /**
-    * Dynamic functions we use to calculate total. Calculation is different if a valid discount id is used.
-    */
-    var getTotal = function () {
-        var i, //iterator
-            total = 0;
-        for (i in items) {
-            if (items[i].price) {
-                total += Math.round((items[i].price * items[i].count) * 100) / 100;
+        /**
+        * Dynamic functions we use to calculate total. Calculation is different if a valid discount id is used.
+        */
+        getTotal = function () {
+            var i, //iterator
+                total = 0;
+            if (items.length > 0) {
+                for (i in items) {
+                    if (items.hasOwnProperty(i)) {
+                        if (items[i].price) {
+                            total += Math.round((items[i].price * items[i].count) * 100) / 100;
+                        }
+                    }
+                }
             }
-        }
-        return total;   
-    }, 
-    discountTotal = function () {
-        var i, //iterator
-            total = 0,
-            discount;
-        for (i in items) {
-            total += (items[i].price * items[i].count);
-        }
-        return Math.round((total - (this.discount / 100) * total ) * 100) / 100;   
-    }
+            return total;
+        },
+        discountTotal = function () {
+            var i, //iterator
+                total = 0;
+            if (items.length > 0) {
+                for (i in items) {
+                    if (items.hasOwnProperty(i)) {
+                        total += (items[i].price * items[i].count);
+                    }
+                }
+            }
+            return Math.round((total - (this.discount / 100) * total) * 100) / 100;
+        };
 
     // The constructor
     function Cart() {
-        
+
         //items = [], //array for products (items)
-        this.total = 0, //default total
+        this.total = 0; //default total
         this.cartObservers = []; //we want to send updates if cart changes
 
         // If it's being called again, return the singleton instance
-        if(typeof instance !== "undefined") {
+        if (instance === undefined) {
             return instance;
         }
         //set instance as this
@@ -53,12 +59,14 @@ var Cart = (function() {
     * @returns int number of items in cart
     */
     Cart.prototype.length = function () {
-        var total = 0;
-        for(var i in items) {
-            total += items[i].count;
+        var total = 0, i;
+        for (i in items) {
+            if (items.hasOwnProperty(i)) {
+                total += items[i].count;
+            }
         }
         return total;
-    }
+    };
 
     /**
     * Remove all products from the cart
@@ -67,7 +75,7 @@ var Cart = (function() {
     Cart.prototype.reset = function () {
         items = [];
         return items.length;
-    }
+    };
 
     /**
     * Add an item to the shopping cart by name. If the same item exists, increment the count
@@ -82,9 +90,11 @@ var Cart = (function() {
 
             //if item already added, increment count
             for (i in items) {
-                if (items[i].name === item.name) {
-                    items[i].count++;
-                    result = true;
+                if (items.hasOwnProperty(i)) {
+                    if (items[i].name === item.name) {
+                        items[i].count += 1;
+                        result = true;
+                    }
                 }
             }
 
@@ -99,12 +109,12 @@ var Cart = (function() {
         }
 
         //if a listener is set up, notify it
-        if(typeof this.render === "function") {
+        if (typeof this.render === "function") {
             this.render();
         }
 
         return result;
-    }
+    };
 
     /**
     * Remove an item to the shopping cart by name
@@ -116,27 +126,27 @@ var Cart = (function() {
         var i, //iterator
             result = false;
 
-        for(i in items) {
-            if(items[i].id === id) {
-                if (items[i].count > 0) { //if there is more than one, just reduce count
-                    items[i].count--;
-                    result = true;
-                    break;
-                } else {
-                    items.splice(i, i);
-                    result = true;
+        for (i in items) {
+            if (items.hasOwnProperty(i)) {
+                if (items[i].id === id) {
+                    if (items[i].count > 0) { //if there is more than one, just reduce count
+                        items[i].count -= 1;
+                        result = true;
+                    } else {
+                        items.splice(i, i);
+                        result = true;
+                    }
                     break;
                 }
-                    
             }
         }
 
-        if(typeof this.render === "function") {
+        if (typeof this.render === "function") {
             this.render();
         }
 
         return result;
-    }
+    };
 
     /**
     * Calculate total
@@ -157,7 +167,7 @@ var Cart = (function() {
             return true;
         }
         return false;
-    }
+    };
 
     /**
     * Resets discount code
@@ -165,7 +175,7 @@ var Cart = (function() {
     */
     Cart.prototype.resetDiscount = function () {
         Cart.prototype.getTotal = getTotal;
-    }
+    };
 
     /**
     * Render the state of the cart in html
@@ -178,7 +188,7 @@ var Cart = (function() {
         if (typeof el !== "object") {
             throw "No dom element specified";
         }
-        
+
         /**
         * Render the state of the cart in html
         * @param dom element to update
@@ -186,50 +196,56 @@ var Cart = (function() {
         */
         Cart.prototype.render = (function (el) {
             return function () {
-                var html = "";
+                var html = "", i;
                 html += '<h1>Your cart</h1>';
                 html += '<h2>Products</h2>';
                 html += '<ul id="productList">';
-                for (var i in self.items) {
-                    html += '    <li>' + self.items[i].name + 
-                        '<span class="count">' + self.items[i].count + '</span>' + 
-                        '<span class="price">' + self.items[i].price + '</span>' +
-                        '<span class="totalPrice">' + 
-                        self.items[i].count + ' x ' + self.items[i].price + 
-                        '</span>' +
-                        '</li>';
+                for (i in self.items) {
+                    if (self.items.hasOwnProperty(i)) {
+                        html += '<li>' + self.items[i].name;
+                        html += '<span class="count">' + self.items[i].count + '</span>';
+                        html += '<span class="price">' + self.items[i].price + '</span>';
+                        html += '<span class="totalPrice">';
+                        html += self.items[i].count + ' x ' + self.items[i].price + '</span>' + '</li>';
+                    }
                 }
                 html += '</ul>';
                 html += '<p>Total: <span id="total">' + self.getTotal() + '</span></p>';
                 el.innerHTML = html;
-            }
-        })(el);
+            };
+        }(el));
 
         this.render();
-    }
+    };
 
     // Return the constructor
     return Cart;
 
-})();
+}());
 
 /**
 * Product object
 * @param data object to clone
 */
-function Product () {
+function Product() {
+    "use strict";
     var i, j;
-    if (arguments.length === 0) {
-        throw "You must initialise the product";
-    }
-    for (i in arguments) {
-        if(typeof arguments[i] === "object") {
-            for (j in arguments[i]) {
-                this[j] = arguments[i][j];
+    if (arguments.length > 0) {
+        for (i in arguments) {
+            if (arguments.hasOwnProperty(i)) {
+                if (typeof arguments[i] === "object") {
+                    for (j in arguments[i]) {
+                        if (arguments[i].hasOwnProperty(j)) {
+                            this[j] = arguments[i][j];
+                        }
+                    }
+                } else {
+                    this[i] = arguments[i];
+                }
             }
-        } else {
-            this[i] = arguments[i];
         }
+    } else {
+        throw "You must initialise the product";
     }
 }
 
@@ -239,6 +255,7 @@ function Product () {
 * @returns string of html content
 */
 Product.prototype.render = function () {
+    "use strict";
     var htmlString = "";
     //for now just assume name is there
     htmlString += '<div data-domid="' + this.id + '">';
@@ -259,4 +276,4 @@ Product.prototype.render = function () {
     htmlString += "</div>";
     htmlString += "</div>";
     return htmlString;
-}
+};
